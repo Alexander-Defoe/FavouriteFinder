@@ -1,0 +1,8 @@
+cd "/home/alexander/Python Projects/TikTokFavourites"
+
+cat > .gitignore <<'EOF'
+CLAUDE.md
+mock_data.json
+__pycache__/
+.venv/
+EOF
