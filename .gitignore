@@ -4,3 +4,5 @@ favourites.db
 __pycache__/
 .venv/
 .claude/
+user_data_tiktok.json
+data/

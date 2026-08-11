@@ -31,11 +31,11 @@ for number in range(300):
     entries.append(entry)
 
 export = {
-    "Your Activity": {
+    "Likes and Favorites": {
         "Favorite Videos": {
             "FavoriteVideoList": entries,
         },
     },
 }
-with open("mock_data.json", "w") as file:
+with open("data/mock_data.json", "w") as file:
     json.dump(export, file, indent=2)
