@@ -1,8 +1,6 @@
-cd "/home/alexander/Python Projects/TikTokFavourites"
-
-cat > .gitignore <<'EOF'
 CLAUDE.md
 mock_data.json
+favourites.db
 __pycache__/
 .venv/
-EOF
+.claude/
