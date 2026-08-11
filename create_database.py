@@ -8,6 +8,8 @@ cursor.execute("""
         id INTEGER PRIMARY KEY,
         link TEXT NOT NULL,
         saved_at TEXT
+        available INTEGER
+        checked_at TEXT
     )
 """)
 
