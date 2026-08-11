@@ -2,6 +2,8 @@ import json
 import random
 from datetime import datetime, timedelta
 
+random.seed(42)
+
 entries = []
 
 start_time = datetime(2021,4,22,4,5,3)
@@ -15,7 +17,7 @@ for number in range(300):
     link = f"https://www.tiktokv.com/share/video/{random_id}/"
 
     if number > 0 and random.random() < 0.04:
-        link = random.choice(entries)["link"]
+        link = random.choice(entries)["Link"]
 
     if random.random() < 0.05:
         link = "" 
