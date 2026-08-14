@@ -9,7 +9,10 @@ cursor.execute("""
         link TEXT NOT NULL,
         saved_at TEXT,
         available INTEGER,
-        checked_at TEXT
+        checked_at TEXT,
+        title TEXT,
+        author TEXT,
+        thumbnail TEXT
     )
 """)
 
