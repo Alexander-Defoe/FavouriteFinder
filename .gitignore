@@ -1,8 +1,9 @@
 CLAUDE.md
 mock_data.json
-favourites.db
+favourites.db*
 __pycache__/
 .venv/
 .claude/
 user_data_tiktok.json
 data/
+*.log
