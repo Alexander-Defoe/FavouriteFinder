@@ -10,7 +10,9 @@ def shorten(text: str | None, width: int) -> str:
         return ""
     if len(text) <= width:
         return text
-    return text[:width] + "…"
+    if width <= 1:
+        return "…"[:width]
+    return text[:width - 1] + "…"
 
 if __name__ == "__main__":
     connection, cursor = connect()

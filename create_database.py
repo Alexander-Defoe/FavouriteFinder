@@ -1,21 +1,7 @@
-import sqlite3
+from database import connect, create_schema
 
-connection = sqlite3.connect("favourites.db")
-cursor = connection.cursor()
-
-cursor.execute("""
-    CREATE TABLE IF NOT EXISTS favourites (
-        id INTEGER PRIMARY KEY,
-        link TEXT NOT NULL,
-        saved_at TEXT,
-        available INTEGER,
-        checked_at TEXT,
-        title TEXT,
-        author TEXT,
-        thumbnail TEXT
-    )
-""")
-
+connection, cursor = connect()
+create_schema(cursor)
 connection.commit()
 connection.close()
 

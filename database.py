@@ -40,3 +40,17 @@ def fetch_favourites(cursor, search="", available_only=False, limit=20, offset=0
         LIMIT ? OFFSET ?
     """
     return cursor.execute(query, tuple(params + [limit, offset])).fetchall()
+
+def create_schema(cursor):
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS favourites (
+            id INTEGER PRIMARY KEY,
+            link TEXT NOT NULL,
+            saved_at TEXT,
+            available INTEGER,
+            checked_at TEXT,
+            title TEXT,
+            author TEXT,
+            thumbnail TEXT
+        )
+    """)
