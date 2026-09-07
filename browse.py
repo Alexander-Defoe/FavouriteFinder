@@ -1,60 +1,47 @@
 import argparse
-import sqlite3
 import sys
+from database import connect, count_favourites, fetch_favourites
 
 def last_page_number(total: int, page_size: int) -> int:
     return (total + page_size - 1) // page_size
 
-connection = sqlite3.connect("favourites.db")
-cursor = connection.cursor()
+def shorten(text: str | None, width: int) -> str:
+    if not text:
+        return ""
+    if len(text) <= width:
+        return text
+    return text[:width] + "…"
 
-parser = argparse.ArgumentParser(description="Browse saved TikTok favourites")
-parser.add_argument("page", type=int, nargs="?", default=1)
-parser.add_argument("--search", default="")
-parser.add_argument("--available", action="store_true")
-args = parser.parse_args()
+if __name__ == "__main__":
+    connection, cursor = connect()
 
-page = args.page
-search = f"%{args.search}%"
+    parser = argparse.ArgumentParser(description="Browse saved TikTok favourites")
+    parser.add_argument("page", type=int, nargs="?", default=1)
+    parser.add_argument("--search", default="")
+    parser.add_argument("--available", action="store_true")
+    parser.add_argument("--since", default="")
+    parser.add_argument("--until", default="")
 
-conditions = ["COALESCE(author, '') LIKE ?"]
-params = [search]
+    args = parser.parse_args()
 
-if args.available:
-    conditions.append("available = 1")
+    page = args.page
 
-where_clause = " AND ".join(conditions)
+    page_size = 20
+    offset = (page - 1) * page_size
 
-page_size = 20
-offset = (page - 1) * page_size
+    total = count_favourites(cursor, args.search, args.available, args.since, args.until)
 
-count_query = f"""
-    SELECT COUNT(*)
-    FROM favourites
-    WHERE {where_clause}
-"""
+    last_page = last_page_number(total, page_size)
 
+    if page < 1 or page > last_page:
+        sys.exit(f"Page must be between 1 and {last_page}")
 
-total = cursor.execute(count_query, tuple(params)).fetchone()[0]
+    end = min(offset + page_size, total)
+    print(f"Page {page} of {last_page} — showing {offset + 1}-{end} of {total}")
 
-last_page = last_page_number(total, page_size)
+    for row in fetch_favourites(cursor, args.search, args.available, page_size, offset,
+                                since=args.since, until=args.until):
+        print(f"  {row['saved_at']}  {row['link']}")
+        print(f"      {shorten(row['author'], 20)} · {shorten(row['title'], 70)}")
 
-if page < 1 or page > last_page:
-    sys.exit(f"Page must be between 1 and {last_page}")
-
-query = f"""
-    SELECT saved_at, link, author
-    FROM favourites
-    WHERE {where_clause}
-    ORDER BY saved_at DESC NULLS LAST
-    LIMIT ?
-    OFFSET ?
-"""
-
-end = min(offset + page_size, total)
-print(f"Page {page} of {last_page} — showing {offset + 1}-{end} of {total}")
-
-for row in cursor.execute(query, tuple(params + [page_size, offset])):
-    print(f"  {row[0]}  {row[2]}  {row[1]}")
-
-connection.close()
+    connection.close()
