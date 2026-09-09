@@ -76,7 +76,8 @@ python browse.py
 pytest
 ```
 
-19 tests: unit tests for the pagination and truncation logic, a property test
-checking that every SQL placeholder has a matching parameter across four
-argument combinations, and integration tests that run real queries against a
-temporary database built from the same schema as production.
+35 tests: unit tests for the pagination, truncation and date-validation
+logic; a property test checking that every SQL placeholder has a matching
+parameter across four argument combinations; and integration tests running
+real queries against a temporary database built from the same schema as
+production.

@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-favourites_file = "data/user_data_tiktok.json"
+FAVOURITES_FILE = "data/user_data_tiktok.json"
 
 def load_favourites(path):
     with open(path) as file:
@@ -9,7 +9,7 @@ def load_favourites(path):
     return data["Likes and Favorites"]["Favorite Videos"]["FavoriteVideoList"]
 
 if __name__ == "__main__":
-    favourites = load_favourites(favourites_file)
+    favourites = load_favourites(FAVOURITES_FILE)
 
     total = 0
     missing_dates = 0

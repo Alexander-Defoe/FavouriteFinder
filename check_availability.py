@@ -1,14 +1,12 @@
-import requests
-import sqlite3
 import time
 from datetime import datetime
 
-connection = sqlite3.connect("favourites.db")
-cursor = connection.cursor()
+import requests
 
-query = "SELECT id, link FROM favourites WHERE available IS NULL"
+from database import connect, record_availability, unchecked_favourites
 
-rows = cursor.execute(query).fetchall()
+connection, cursor = connect()
+rows = unchecked_favourites(cursor)
 
 checked = 0
 consecutive_unknown = 0
@@ -25,6 +23,7 @@ for row in rows:
             timeout=15,
         )
     except requests.RequestException:
+        time.sleep(0.5)
         continue
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -35,11 +34,13 @@ for row in rows:
         title = data["title"]
         author = data["author_name"]
         thumbnail = data["thumbnail_url"]
+        consecutive_unknown = 0
     elif response.status_code == 400:
         available = 0
         title = None
         author = None
         thumbnail = None
+        consecutive_unknown = 0
     else:
         available = None
         consecutive_unknown += 1
@@ -49,14 +50,8 @@ for row in rows:
 
 
     if available is not None:
-        cursor.execute(
-            """
-            UPDATE favourites
-            SET available = ?, checked_at = ?, title = ?, author = ?, thumbnail = ?
-            WHERE id = ?
-            """,
-            (available, now, title, author, thumbnail, video_row_id),
-        )
+        record_availability(cursor, video_row_id, available, now,
+                            title=title, author=author, thumbnail=thumbnail)
 
     checked += 1
 

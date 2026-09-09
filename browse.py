@@ -1,5 +1,7 @@
 import argparse
 import sys
+from datetime import datetime
+
 from database import connect, count_favourites, fetch_favourites
 
 def last_page_number(total: int, page_size: int) -> int:
@@ -14,6 +16,17 @@ def shorten(text: str | None, width: int) -> str:
         return "…"[:width]
     return text[:width - 1] + "…"
 
+def is_valid_date(value: str) -> bool:
+    """True for an empty string, or a date written as YYYY-MM-DD."""
+    if not value:
+        return True
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+    except ValueError:
+        return False
+    return True
+
+
 if __name__ == "__main__":
     connection, cursor = connect()
 
@@ -25,6 +38,10 @@ if __name__ == "__main__":
     parser.add_argument("--until", default="")
 
     args = parser.parse_args()
+
+    for name, value in (("--since", args.since), ("--until", args.until)):
+        if not is_valid_date(value):
+            sys.exit(f"{name} must be a date as YYYY-MM-DD, got {value!r}")
 
     page = args.page
 

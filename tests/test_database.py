@@ -1,4 +1,11 @@
-from database import _build_filter, connect, count_favourites, create_schema
+from database import (
+    _build_filter,
+    connect,
+    count_favourites,
+    create_schema,
+    fetch_favourites,
+    insert_favourites,
+)
 
 
 def test_search_term_is_wrapped_for_like_matching():
@@ -89,3 +96,54 @@ def test_availability_flag_excludes_dead_rows(tmp_path):
 def test_since_excludes_older_rows(tmp_path):
     cursor = make_database(tmp_path)
     assert count_favourites(cursor, since="2025-01-01") == 2
+
+
+def test_fetch_returns_newest_first(tmp_path):
+    cursor = make_database(tmp_path)
+    rows = fetch_favourites(cursor)
+    assert [row["saved_at"] for row in rows] == [
+        "2026-03-10 10:00:00",
+        "2025-01-15 10:00:00",
+        "2024-06-01 10:00:00",
+    ]
+
+
+def test_fetch_respects_the_limit(tmp_path):
+    cursor = make_database(tmp_path)
+    assert len(fetch_favourites(cursor, limit=2)) == 2
+
+
+def test_fetch_offset_skips_from_the_front(tmp_path):
+    cursor = make_database(tmp_path)
+    rows = fetch_favourites(cursor, limit=1, offset=1)
+    assert rows[0]["author"] == "Zach"
+
+
+def test_fetch_returns_rows_addressable_by_column_name(tmp_path):
+    cursor = make_database(tmp_path)
+    row = fetch_favourites(cursor, limit=1)[0]
+    assert row["link"] == "https://x/3"
+
+
+def test_fetch_applies_the_same_filters_as_the_count(tmp_path):
+    cursor = make_database(tmp_path)
+    rows = fetch_favourites(cursor, search="zach")
+    assert len(rows) == count_favourites(cursor, search="zach") == 1
+
+
+def test_reimporting_the_same_export_adds_nothing(tmp_path):
+    cursor = make_database(tmp_path)
+    before = count_favourites(cursor)
+    added = insert_favourites(cursor, [("https://x/1", "2025-01-15 10:00:00")])
+    assert added == 0
+    assert count_favourites(cursor) == before
+
+
+def test_reimporting_adds_only_the_new_links(tmp_path):
+    cursor = make_database(tmp_path)
+    added = insert_favourites(cursor, [
+        ("https://x/1", "2025-01-15 10:00:00"),
+        ("https://x/9", "2026-09-01 10:00:00"),
+    ])
+    assert added == 1
+    assert count_favourites(cursor) == 4
