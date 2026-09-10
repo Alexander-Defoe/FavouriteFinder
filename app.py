@@ -1,21 +1,45 @@
 from flask import Flask, render_template, request
 
-from database import connect, fetch_favourites, count_favourites
-from tiktok import video_id
+from database import connect, count_favourites, fetch_favourites
 from pagination import last_page_number
+from tiktok import video_id
 
 app = Flask(__name__)
 
+PAGE_SIZE = 20
+
+
+def page_of_favourites(page):
+    """Rows for one page, plus how many favourites there are in total."""
+    connection, cursor = connect()
+    total = count_favourites(cursor, available_only=True)
+    rows = fetch_favourites(
+        cursor,
+        available_only=True,
+        limit=PAGE_SIZE,
+        offset=(page - 1) * PAGE_SIZE,
+    )
+    connection.close()
+    return rows, total
+
+
 @app.route("/")
 def index():
-    connection, cursor = connect()
-
-    page_size = 20
     page = request.args.get("page", 1, type=int)
-    offset = (page - 1) * page_size
-    total = count_favourites(cursor, available_only=True)
-    last_page = last_page_number(total, page_size)
-    rows = fetch_favourites(cursor, available_only=True, limit=page_size, offset=offset)
+    rows, total = page_of_favourites(page)
+    return render_template(
+        "index.html",
+        rows=rows,
+        video_id=video_id,
+        page=page,
+        last_page=last_page_number(total, PAGE_SIZE),
+        total=total,
+    )
 
-    connection.close()
-    return render_template("index.html", rows=rows, video_id=video_id, page=page, last_page=last_page, total=total)
+
+@app.route("/cards")
+def cards():
+    """Just the cards for one page, for the infinite scroll to append."""
+    page = request.args.get("page", 1, type=int)
+    rows, _ = page_of_favourites(page)
+    return render_template("_cards.html", rows=rows, video_id=video_id)

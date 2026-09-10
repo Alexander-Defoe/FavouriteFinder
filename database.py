@@ -136,3 +136,11 @@ def record_availability(
         """,
         (available, checked_at, title, author, thumbnail, favourite_id),
     )
+
+
+def available_favourites(cursor: sqlite3.Cursor) -> list[sqlite3.Row]:
+    """Rows for videos confirmed to still exist."""
+    return cursor.execute(
+        "SELECT id, link FROM favourites WHERE available = 1"
+    ).fetchall()
+

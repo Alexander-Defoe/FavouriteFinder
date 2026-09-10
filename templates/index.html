@@ -13,41 +13,121 @@
   .pager { margin-top: 2rem; text-align: center; }
   .pager a { color: #eee; margin: 0 1rem; }
 
+  #player { position: fixed; inset: 0; z-index: 10; background: rgba(0, 0, 0, .94);
+            display: flex; align-items: center; justify-content: center; gap: 1.5rem; }
+  #player[hidden] { display: none; }
+  #frame {
+    /* --show-h clamps to the window, which crops the caption block off the
+       bottom without a fixed pixel guess. Cropping the TOP breaks Chrome's
+       autoplay in cross-origin iframes, so leave that at zero. */
+    --crop-side: 26px;
+    --iframe-w: 372px;
+    --iframe-h: 900px;
+    --show-h: 78vh;
+
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #000;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+    width:  calc(var(--iframe-w) - var(--crop-side) * 2);
+    height: min(var(--iframe-h), var(--show-h));
+  }
+  #frame iframe {
+    position: absolute;
+    top: 0;
+    left: calc(var(--crop-side) * -1);
+    width:  var(--iframe-w);
+    height: var(--iframe-h);
+    border: 0;
+  }
+  #player button { background: #222; color: #eee; border: 0; border-radius: 999px;
+                   width: 46px; height: 46px; font-size: 1.1rem; cursor: pointer; }
+  #player button:hover { background: #333; }
+  #close { position: absolute; top: 1.5rem; right: 1.5rem; }
+  #counter { position: absolute; top: 1.5rem; left: 1.5rem; opacity: .6; font-size: .85rem; }
 </style>
 
 <div class="grid">
-  {% for row in rows %}
-    <div class="card" data-id="{{ video_id(row['link']) }}">
-      <img src="{{ row['thumbnail'] }}" alt="">
-      <div class="author">{{ row['author'] }}</div>
-      <div class="caption">{{ row['title']|truncate(90) }}</div>
-      <a class="open" href="{{ row['link'] }}" target="_blank">open on TikTok</a>
-    </div>
-  {% endfor %}
-  {% if page > 1 %}
-  <a href="/?page={{ page - 1 }}">previous</a>
-{% endif %}
-Page {{ page }} of {{ last_page }}
-{% if page < last_page %}
-  <a href="/?page={{ page + 1 }}">next</a>
-{% endif %}
-
+  {% include "_cards.html" %}
 </div>
 
-<p class="pager">
-  {% if page > 1 %}<a href="/?page={{ page - 1 }}">← previous</a>{% endif %}
-  Page {{ page }} of {{ last_page }} — {{ total }} favourites
-  {% if page < last_page %}<a href="/?page={{ page + 1 }}">next →</a>{% endif %}
-</p>
+<div id="sentinel"></div>
+
+<p class="pager" id="status">{{ total }} favourites</p>
+
+<div id="player" hidden>
+  <span id="counter"></span>
+  <button id="close" title="Close (Esc)">✕</button>
+  <button id="prev" title="Previous (↑)">↑</button>
+  <div id="frame"></div>
+  <button id="next" title="Next (↓)">↓</button>
+</div>
 
 <script>
-  document.querySelectorAll('.card').forEach(card => {
-    card.addEventListener('click', event => {
-      if (event.target.closest('.open')) return;
-      const id = card.dataset.id;
-      card.innerHTML =
-        '<iframe src="https://www.tiktok.com/embed/v2/' + id +
-        '" width="100%" height="580" frameborder="0" allow="autoplay" allowfullscreen></iframe>';
-    });
+  const player  = document.getElementById('player');
+  const frame   = document.getElementById('frame');
+  const counter = document.getElementById('counter');
+  let current = -1;
+
+  function cards() {
+    return Array.from(document.querySelectorAll('.card'));
+  }
+
+  function show(index) {
+    const list = cards();
+    if (index < 0 || index >= list.length) return;
+    current = index;
+    frame.innerHTML =
+      '<iframe src="https://www.tiktok.com/embed/v2/' + list[index].dataset.id +
+      '" allow="autoplay; fullscreen"></iframe>';
+    counter.textContent = (index + 1) + ' of ' + list.length;
+    player.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePlayer() {
+    player.hidden = true;
+    frame.innerHTML = '';
+    document.body.style.overflow = '';
+  }
+
+  document.querySelector('.grid').addEventListener('click', event => {
+    if (event.target.closest('.open')) return;
+    const card = event.target.closest('.card');
+    if (card) show(cards().indexOf(card));
+  });
+
+  player.addEventListener('click', event => {
+    if (event.target === player) closePlayer();
+  });
+
+  document.getElementById('close').addEventListener('click', closePlayer);
+  document.getElementById('prev').addEventListener('click', () => show(current - 1));
+  document.getElementById('next').addEventListener('click', () => show(current + 1));
+
+  const lastPage = {{ last_page }};
+  let nextPage = {{ page }} + 1;
+  let loading = false;
+
+  new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting || loading || nextPage > lastPage) return;
+    loading = true;
+    fetch('/cards?page=' + nextPage)
+      .then(response => response.text())
+      .then(html => {
+        document.querySelector('.grid').insertAdjacentHTML('beforeend', html);
+        nextPage++;
+        loading = false;
+        document.getElementById('status').textContent =
+          cards().length + ' of {{ total }} loaded';
+      });
+  }, { rootMargin: '600px' }).observe(document.getElementById('sentinel'));
+
+  document.addEventListener('keydown', event => {
+    if (player.hidden) return;
+    if (event.key === 'Escape') closePlayer();
+    if (event.key === 'ArrowDown'  || event.key === 'ArrowRight') show(current + 1);
+    if (event.key === 'ArrowUp'    || event.key === 'ArrowLeft')  show(current - 1);
   });
 </script>

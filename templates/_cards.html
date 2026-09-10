@@ -1,0 +1,9 @@
+{% for row in rows %}
+  <div class="card" data-id="{{ video_id(row['link']) }}">
+    <img src="/static/thumbs/{{ video_id(row['link']) }}.jpg" alt=""
+         loading="lazy" onerror="this.style.visibility='hidden'">
+    <div class="author">{{ row['author'] }}</div>
+    <div class="caption">{{ row['title']|truncate(90) }}</div>
+    <a class="open" href="{{ row['link'] }}" target="_blank">open on TikTok</a>
+  </div>
+{% endfor %}
