@@ -1,7 +1,7 @@
-from database import connect, insert_favourites
-from parse_favourites import load_favourites
+from favourites.database import connect, insert_favourites
+from favourites.parse import FAVOURITES_FILE, load_favourites
 
-favourites = load_favourites("data/user_data_tiktok.json")
+favourites = load_favourites(FAVOURITES_FILE)
 
 rows = [
     (favourite["Link"], favourite.get("Date"))

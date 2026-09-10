@@ -3,8 +3,8 @@ from datetime import datetime
 
 import requests
 
-from database import connect, record_availability, unchecked_favourites
-from tiktok import video_id as extract_video_id
+from favourites.database import connect, record_availability, unchecked_favourites
+from favourites.tiktok import video_id as extract_video_id
 
 connection, cursor = connect()
 rows = unchecked_favourites(cursor)

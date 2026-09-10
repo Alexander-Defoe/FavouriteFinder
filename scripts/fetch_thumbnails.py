@@ -6,8 +6,8 @@ from pathlib import Path
 import requests
 from PIL import Image
 
-from database import available_favourites, connect
-from tiktok import video_id
+from favourites.database import available_favourites, connect
+from favourites.tiktok import video_id
 
 THUMB_DIR = Path("static/thumbs")
 OEMBED = "https://www.tiktok.com/oembed"

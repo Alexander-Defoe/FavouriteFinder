@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request
 
-from database import connect, count_favourites, fetch_favourites
-from pagination import last_page_number
-from tiktok import video_id
+from favourites.database import connect, count_favourites, fetch_favourites
+from favourites.pagination import last_page_number
+from favourites.tiktok import video_id
 
 app = Flask(__name__)
 

@@ -1,4 +1,4 @@
-from database import connect, create_schema
+from favourites.database import connect, create_schema
 
 connection, cursor = connect()
 create_schema(cursor)

@@ -1,4 +1,4 @@
-from tiktok import embed_url, video_id
+from favourites.tiktok import embed_url, video_id
 
 
 def test_video_id_from_the_share_link_stored_in_the_export():

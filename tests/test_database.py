@@ -1,4 +1,4 @@
-from database import (
+from favourites.database import (
     _build_filter,
     connect,
     count_favourites,

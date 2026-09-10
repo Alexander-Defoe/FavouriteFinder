@@ -1,6 +1,6 @@
 import json
 
-from parse_favourites import load_favourites
+from favourites.parse import load_favourites
 
 
 def write_export(tmp_path, favourites):
