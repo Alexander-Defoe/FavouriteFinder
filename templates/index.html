@@ -16,34 +16,20 @@
     .status { margin-top: 2rem; text-align: center; opacity: .6; }
 
     #player { position: fixed; inset: 0; z-index: 10; background: rgba(0, 0, 0, .94);
-              display: flex; align-items: center; justify-content: center; gap: 1.5rem; }
+              display: flex; align-items: center; justify-content: center; gap: 1rem; }
     #player[hidden] { display: none; }
     #frame {
-      /* The iframe is taller than the box, so --show-h crops TikTok's caption
-         block off the bottom without guessing a pixel height. Do NOT crop the
-         top: Chrome stops autoplaying cross-origin iframes that are heavily
-         clipped, and hiding the header was enough to trigger it. */
-      --crop-side: 26px;
-      --iframe-w: 372px;
-      --iframe-h: 900px;
-      --show-h: 78vh;
-
-      position: relative;
-      overflow: hidden;
+      /* Sized by height; the aspect ratio sets the width. max-width stops it
+         overlapping the arrow buttons on short, wide windows. */
+      height: 94vh;
+      aspect-ratio: 325 / 580;
+      max-width: calc(100vw - 9rem);
       border-radius: 14px;
+      overflow: hidden;
       background: #000;
       box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
-      width:  calc(var(--iframe-w) - var(--crop-side) * 2);
-      height: min(var(--iframe-h), var(--show-h));
     }
-    #frame iframe {
-      position: absolute;
-      top: 0;
-      left: calc(var(--crop-side) * -1);
-      width:  var(--iframe-w);
-      height: var(--iframe-h);
-      border: 0;
-    }
+    #frame iframe { width: 100%; height: 100%; border: 0; display: block; }
     #player button { background: #222; color: #eee; border: 0; border-radius: 999px;
                      width: 46px; height: 46px; font-size: 1.1rem; cursor: pointer; }
     #player button:hover { background: #333; }
@@ -94,12 +80,35 @@
     if (index < 0 || index >= list.length) return;
     current = index;
     frame.innerHTML =
-      '<iframe src="https://www.tiktok.com/embed/v2/' + list[index].dataset.id +
-      '" allow="autoplay; fullscreen"></iframe>';
+      '<iframe src="https://www.tiktok.com/player/v1/' + list[index].dataset.id +
+      '?autoplay=1&loop=1&music_info=0&description=0&rel=0"' +
+      ' allow="autoplay; fullscreen"></iframe>';
     counter.textContent = (index + 1) + ' of ' + list.length;
     player.hidden = false;
     document.body.style.overflow = 'hidden';
   }
+
+  // TikTok's player/v1 accepts commands as {type, value, 'x-tiktok-player': true}
+  // and emits its own events back the same way. Sending on onPlayerReady beats
+  // guessing with a timer.
+  function send(type, value) {
+    const iframe = frame.querySelector('iframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage(
+        { type: type, value: value, 'x-tiktok-player': true }, '*'
+      );
+    }
+  }
+
+  window.addEventListener('message', event => {
+    const data = event.data;
+    if (!data || typeof data !== 'object' || !data['x-tiktok-player']) return;
+    if (data.type === 'onPlayerReady') {
+      send('unMute');
+      send('setVolume', 100);
+      send('play');
+    }
+  });
 
   function closePlayer() {
     player.hidden = true;
