@@ -3,9 +3,7 @@ import sys
 from datetime import datetime
 
 from database import connect, count_favourites, fetch_favourites
-
-def last_page_number(total: int, page_size: int) -> int:
-    return (total + page_size - 1) // page_size
+from pagination import last_page_number
 
 def shorten(text: str | None, width: int) -> str:
     if not text:

@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 
 from database import connect, record_availability, unchecked_favourites
+from tiktok import video_id as extract_video_id
 
 connection, cursor = connect()
 rows = unchecked_favourites(cursor)
@@ -13,7 +14,7 @@ consecutive_unknown = 0
 
 for row in rows:
     video_row_id, link = row
-    video_id = link.rstrip("/").split("/")[-1]
+    video_id = extract_video_id(link)
     video_url = f"https://www.tiktok.com/@x/video/{video_id}"
 
     try:

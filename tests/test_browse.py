@@ -1,4 +1,5 @@
-from browse import is_valid_date, last_page_number, shorten
+from browse import is_valid_date, shorten
+from pagination import last_page_number
 
 
 def test_last_page_rounds_up_for_a_partial_final_page():
